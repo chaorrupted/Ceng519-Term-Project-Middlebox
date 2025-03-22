@@ -97,7 +97,7 @@ services:
   abc-processor-python:
     build: ./dockers/abc-processor-python
     init: true
-    container_name: abc-processor
+    container_name: abc-processor-python
     networks:
       intnet:
     command: ['/bin/bash', '/config/configure-processor.sh']
