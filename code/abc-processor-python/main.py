@@ -16,7 +16,7 @@ async def run():
         packet = Ether(data)
         print(packet.show())
         # Publish the received message to outpktsec and outpktinsec
-        delay = random.expovariate(1 / 5e-6)
+        delay = random.expovariate(1 / 5e-9)
         await asyncio.sleep(delay)
         if subject == "inpktsec":
             await nc.publish("outpktinsec", msg.data)
