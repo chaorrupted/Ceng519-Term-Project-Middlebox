@@ -2,35 +2,40 @@ import os
 import socket
 import time
 
-def udp_sender():
-    host = os.getenv('INSECURENET_HOST_IP')
-    port = 8888
-    message = "Hello, InSecureNet!"
+from netfilterqueue import NetfilterQueue as nfq
+from scapy.all import *
 
-    if not host:
-        print("SECURENET_HOST_IP environment variable is not set.")
-        return
+def packet_listener(packet):
+    # print("Packet listener")
+    scapy_packet = IP(packet.get_payload())
 
-    try:
-        # Create a UDP socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    print("packet before : ")
+    IP(packet.get_payload()).show()
 
-        while True:
-            # Send message to the server
-            sock.sendto(message.encode(), (host, port))
-            print(f"Message sent to {host}:{port}")
+    if scapy_packet.haslayer(IP):
+        # print("IP layer")
+        scapy_packet[IP].chksum = None
+        scapy_packet[IP].len = None
 
-            # Receive response from the server
-            response, server = sock.recvfrom(4096)
-            print(f"Response from server: {response.decode()}")
+        scapy_packet[IP].ttl = 128
+        
+        rebuilt_packet = Ether(scapy_packet.build())
+        packet.set_payload(bytes(rebuilt_packet))
 
-            # Sleep for 1 second
-            time.sleep(1)
+    print("packet after : ")
+    IP(packet.get_payload()).show()
+    packet.accept()
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        sock.close()
+def setup_nfqueue():
+    os.system('iptables -I OUTPUT -j NFQUEUE --queue-num 1')
+
+    queue = nfq()
+    # print("nfq")
+    queue.bind(1, packet_listener)
+    # print("bind")
+    queue.run()
+    # print("run")
+
 
 if __name__ == "__main__":
-    udp_sender()
+    setup_nfqueue()
