@@ -17,7 +17,7 @@ def packet_listener(packet):
     scapy_packet = IP(packet.get_payload())
 
     if scapy_packet.haslayer(IP):  
-        # parameter 1: randomly allow some % of packets on the network to prevent suspicious slow downs on host
+        # todo: add parameter 1: randomly skip some % of packets on the network to prevent suspicious slow downs on host
 
         ip_packet = scapy_packet[IP]
         ip_packet.chksum = None
@@ -27,7 +27,9 @@ def packet_listener(packet):
         
         del ip_packet.payload
 
-        option_length = 2
+        option_length = 2  # todo: use random amount of option field space. 
+                           # todo: allow some space for legit hosts to write their ip addresses 
+                           # in the record route field to make it look legitimate against detection
         ip_packet.ihl += (option_length + 1)
         ip_packet.options = IPOption(fake_record_route_data(option_length))
         
